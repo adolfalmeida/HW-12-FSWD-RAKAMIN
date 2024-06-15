@@ -1,43 +1,7 @@
 import * as React from "react";
-import { createContext, useContext, useState } from "react";
 import { ChakraProvider, Center, Box, Button, VStack, Text, Grid } from "@chakra-ui/react";
 
-// Create context for game state
-const GameContext = createContext();
-
-function GameProvider({ children }) {
-  const [squares, setSquares] = useState(Array(9).fill(null));
-  const [nextValue, setNextValue] = useState("X");
-
-  function selectSquare(square) {
-    if (squares[square] || calculateWinner(squares)) {
-      return;
-    }
-    const newSquares = squares.slice();
-    newSquares[square] = nextValue;
-    setSquares(newSquares);
-    setNextValue(calculateNextValue(newSquares));
-  }
-
-  function restart() {
-    setSquares(Array(9).fill(null));
-    setNextValue("X");
-  }
-
-  return (
-    <GameContext.Provider value={{ squares, nextValue, selectSquare, restart }}>
-      {children}
-    </GameContext.Provider>
-  );
-}
-
-function useGame() {
-  return useContext(GameContext);
-}
-
-function Board() {
-  const { squares, selectSquare } = useGame();
-
+function Board({ squares, onClick }) {
   function renderSquare(i) {
     return (
       <Box
@@ -55,7 +19,7 @@ function Board() {
         padding="0"
         textAlign="center"
         color={squares[i] === "X" ? "red" : squares[i] === "O" ? "blue" : "white"}
-        onClick={() => selectSquare(i)}
+        onClick={() => onClick(i)}
       >
         {squares[i]}
       </Box>
@@ -67,7 +31,7 @@ function Board() {
 
   return (
     <Box>
-      <Text mb="10px" color="white">
+      <Text fontSize="15px" mb="10px" color="white">
         {status}
       </Text>
       <Grid templateColumns="repeat(3, 1fr)" gap={0} w="302px">
@@ -86,40 +50,48 @@ function Board() {
 }
 
 function Game() {
-  const { restart } = useGame();
+  const [squares, setSquares] = React.useState(Array(9).fill(null));
+  const [nextValue, setNextValue] = React.useState("X");
 
-  return (
-    <Center height="100vh">
-      <VStack spacing={4}>
-        <Box className="game-board">
-          <Board />
-        </Box>
-        <Button
-          className="restart"
-          onClick={restart}
-          backgroundColor="white"
-          color="black"
-          border="1px solid black"
-          _hover={{ backgroundColor: "green", color: "white" }}
-        >
-          Restart
-        </Button>
-      </VStack>
-    </Center>
-  );
-}
+  function selectSquare(square) {
+    if (squares[square] || calculateWinner(squares)) {
+      return;
+    }
+    const newSquares = squares.slice();
+    newSquares[square] = nextValue;
+    setSquares(newSquares);
+    setNextValue(calculateNextValue(newSquares));
+  }
 
-function App() {
+  function restart() {
+    setSquares(Array(9).fill(null));
+    setNextValue("X");
+  }
+
   return (
     <ChakraProvider>
-      <GameProvider>
-        <Game />
-      </GameProvider>
+      <Center height="100vh">
+        <VStack spacing={4}>
+          <Box className="game-board">
+            <Board squares={squares} onClick={selectSquare} />
+          </Box>
+          <Button
+            className="restart"
+            onClick={restart}
+            backgroundColor="white"
+            color="black"
+            border="1px solid black"
+            _hover={{ backgroundColor: "green", color: "white" }}
+          >
+            Restart
+          </Button>
+        </VStack>
+      </Center>
     </ChakraProvider>
   );
 }
 
-// Helper functions
+// eslint-disable-next-line no-unused-vars
 function calculateStatus(winner, squares, nextValue) {
   return winner
     ? `Winner: ${winner}`
@@ -128,10 +100,12 @@ function calculateStatus(winner, squares, nextValue) {
     : `Next player: ${nextValue}`;
 }
 
+// eslint-disable-next-line no-unused-vars
 function calculateNextValue(squares) {
   return squares.filter(Boolean).length % 2 === 0 ? "X" : "O";
 }
 
+// eslint-disable-next-line no-unused-vars
 function calculateWinner(squares) {
   const lines = [
     [0, 1, 2],
@@ -150,6 +124,10 @@ function calculateWinner(squares) {
     }
   }
   return null;
+}
+
+function App() {
+  return <Game />;
 }
 
 export default App;
